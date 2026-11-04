@@ -1,0 +1,390 @@
+<!doctype html><html lang="az"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><link rel="icon" href="data:,">
+<title>SABAH 30 Gün</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans+Condensed:wght@600;700&family=Fira+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a wall-planner. A 30-cell day strip stays on top; below it one working list for the chosen day. */
+:root{
+  --bg:#EEF2FA; --surface:#FFFFFF; --sunken:#E4EAF6; --ink:#0F1C3F; --ink2:#46547A; --ink3:#6B7796; --line:#D5DDEE;
+  --accent:#1F4FD0; --accent-ink:#FFFFFF; --band:#0F2A6B; --band-ink:#F2F5FF; --band-ink2:#B9C6EA;
+  --today:#F7C35C; --today-ink:#231A02;
+  --ok:#157F4B; --ok-bg:#DDF3E6; --no:#B4321F; --no-bg:#FBE4E0; --warn:#8A5A00; --warn-bg:#FCF0D2; --gap-bg:#FFE9B0; --gap-ink:#5A3D00;
+  --hr:#2B5FD9; --dk:#C8601A; --bk:#0A8F76; --cell:rgba(255,255,255,.1); --cell-fill:#3FBF7F;
+  --display:"Fira Sans Condensed","Arial Narrow",Arial,sans-serif; --body:"Fira Sans","Segoe UI",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1224; --surface:#141D35; --sunken:#0F172C; --ink:#EDF1FC; --ink2:#B3BEDB; --ink3:#8F9BBB; --line:#2A3556;
+  --accent:#7EA3FF; --accent-ink:#0B1224; --band:#0A1737; --band-ink:#EDF1FC; --band-ink2:#9FB0DA;
+  --today:#F7C35C; --today-ink:#231A02;
+  --ok:#54D08F; --ok-bg:#12382A; --no:#FF8E7C; --no-bg:#431C16; --warn:#F2C25A; --warn-bg:#3A2C0A; --gap-bg:#4A3808; --gap-ink:#FFE08A;
+  --hr:#5E8CF5; --dk:#D27A2E; --bk:#22A187; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0B1224; --surface:#141D35; --sunken:#0F172C; --ink:#EDF1FC; --ink2:#B3BEDB; --ink3:#8F9BBB; --line:#2A3556;
+  --accent:#7EA3FF; --accent-ink:#0B1224; --band:#0A1737; --band-ink:#EDF1FC; --band-ink2:#9FB0DA;
+  --today:#F7C35C; --today-ink:#231A02;
+  --ok:#54D08F; --ok-bg:#12382A; --no:#FF8E7C; --no-bg:#431C16; --warn:#F2C25A; --warn-bg:#3A2C0A; --gap-bg:#4A3808; --gap-ink:#FFE08A;
+  --hr:#5E8CF5; --dk:#D27A2E; --bk:#22A187; color-scheme:dark;
+}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}[hidden]{display:none!important}*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:400 15px/1.5 var(--body);margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--band)}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1000px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+.top{background:var(--band);color:var(--band-ink)}
+.top .wrap{padding-block:14px 12px;display:grid;gap:12px}
+.brand{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.brand h1{font:700 26px/1.1 var(--display);letter-spacing:.01em;margin:0}
+.save{font-size:13px;color:var(--band-ink2)}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+.kpi b{display:block;font:700 26px/1.1 var(--display);font-variant-numeric:tabular-nums}
+.kpi span{font-size:12.5px;color:var(--band-ink2)}
+.strip{display:grid;grid-template-columns:repeat(30,minmax(0,1fr));gap:3px}
+.cell{position:relative;appearance:none;border:0;border-radius:4px;height:34px;padding:0;background:var(--cell);color:var(--band-ink);font:600 12px/1 var(--body);font-variant-numeric:tabular-nums;overflow:hidden}
+.cell i{position:absolute;left:0;right:0;bottom:0;background:var(--cell-fill);opacity:.75}
+.cell span{position:relative}
+.cell.today{outline:2px solid var(--today);outline-offset:0}
+.cell.sel{background:var(--today);color:var(--today-ink)}
+.cell.sel i{opacity:.55}
+.cell.mark::after{content:"";position:absolute;top:3px;right:3px;width:5px;height:5px;border-radius:50%;background:var(--today)}
+.cell.sel.mark::after{background:var(--today-ink)}
+.legend{font-size:12.5px;color:var(--band-ink2);display:flex;gap:14px;flex-wrap:wrap}
+
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.tabs .wrap{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+.tabs button{appearance:none;background:none;border:0;border-bottom:3px solid transparent;padding:12px 12px 9px;font-weight:600;color:var(--ink2);white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+
+main.wrap{padding-block:18px 60px;display:grid;gap:18px}
+h2{font:700 24px/1.15 var(--display);margin:0;text-wrap:balance}
+h3{font:600 13px/1.3 var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);margin:0}
+.dayhead{display:grid;gap:6px}
+.daynav{display:flex;align-items:center;gap:8px;color:var(--ink2);font-size:14px;flex-wrap:wrap}
+.daynav button,.btn{appearance:none;border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:6px 10px;font-weight:500}
+.daynav button:hover,.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.flag{display:inline-block;background:var(--warn-bg);color:var(--warn);font-size:12.5px;font-weight:600;padding:2px 8px;border-radius:4px}
+.focus{color:var(--ink2);max-width:70ch;margin:0}
+.grid2{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:18px;align-items:start}
+.stack{display:grid;gap:18px;min-width:0}
+.section{display:grid;gap:8px;min-width:0}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.chip{appearance:none;border:1px solid var(--line);background:var(--surface);border-radius:20px;padding:4px 11px;font-size:13px;color:var(--ink2);font-weight:500}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+
+.list{background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.task{border-top:1px solid var(--line)}
+.task:first-child{border-top:0}
+.row{display:grid;grid-template-columns:30px minmax(0,1fr);gap:10px;padding:11px 12px;align-items:start}
+.tick{appearance:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--ink3);background:none;padding:0;display:grid;place-items:center;font-size:15px;font-weight:700;line-height:1}
+.tick[data-s="done"]{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+.tick[data-s="no"]{background:var(--no);border-color:var(--no);color:var(--surface)}
+.tbody{appearance:none;background:none;border:0;padding:0;text-align:left;display:grid;gap:4px;min-width:0;width:100%}
+.ttitle{font-weight:600;line-height:1.3}
+.task[data-s="done"] .ttitle{color:var(--ink3);text-decoration:line-through;text-decoration-thickness:1px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;font-size:12.5px;color:var(--ink3);align-items:center}
+.dot{display:inline-flex;align-items:center;gap:5px}
+.dot::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ink3)}
+.dot.hr::before{background:var(--hr)} .dot.dk::before{background:var(--dk)} .dot.bk::before{background:var(--bk)}
+.notebit{color:var(--ink2);font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere}
+.detail{padding:0 12px 14px 52px;display:grid;gap:12px}
+.detail ol{margin:0;padding-left:20px;display:grid;gap:4px}
+.ok{font-size:14px;color:var(--ok);font-weight:500}
+.why{font-size:13.5px;color:var(--ink2);background:var(--sunken);padding:8px 10px;border-radius:6px}
+.why b{font-weight:600}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+.btn.on-done{background:var(--ok-bg);border-color:var(--ok);color:var(--ok);font-weight:600}
+.btn.on-no{background:var(--no-bg);border-color:var(--no);color:var(--no);font-weight:600}
+textarea,input[type=text],input[type=number],input[type=search]{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px 10px}
+textarea{min-height:64px;resize:vertical}
+.tpl{border:1px solid var(--line);border-radius:6px;background:var(--sunken)}
+.tpl summary{padding:8px 10px;cursor:pointer;font-weight:500;font-size:14px}
+.tpl-in{padding:0 10px 10px;display:grid;gap:8px}
+.tpl pre{margin:0;font:400 14px/1.5 var(--body);white-space:pre-wrap;overflow-wrap:anywhere;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:10px}
+.tnote{font-size:13px;color:var(--ink2)}
+.gap{background:var(--gap-bg);color:var(--gap-ink);padding:0 3px;border-radius:3px;font-weight:500}
+.manual{color:var(--accent);font-weight:500}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px;display:grid;gap:10px;min-width:0}
+.coach{border-left:0;background:var(--sunken);border-radius:8px;padding:12px 14px;display:grid;gap:4px}
+.coach b{font-weight:600}
+.num{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:6px 8px;text-align:right;border-top:1px solid var(--line);font-size:14px;white-space:nowrap}
+th:first-child,td:first-child{text-align:left;white-space:normal}
+thead th{border-top:0;font-size:12.5px;color:var(--ink3);font-weight:600}
+td input[type=number]{width:62px;padding:4px 6px;text-align:right}
+.bar{height:10px;background:var(--sunken);border-radius:0 4px 4px 0;overflow:hidden;min-width:60px}
+.bar i{display:block;height:100%;border-radius:0 4px 4px 0;background:var(--ink3)}
+.bar.hr i{background:var(--hr)} .bar.dk i{background:var(--dk)} .bar.bk i{background:var(--bk)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px}
+.tile b{display:block;font:700 28px/1.1 var(--display);font-variant-numeric:tabular-nums}
+.tile span{font-size:13px;color:var(--ink2)}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.form label{display:grid;gap:3px;font-size:13px;color:var(--ink2)}
+.banner{background:var(--warn-bg);color:var(--warn);padding:10px 12px;border-radius:8px;font-size:14px}
+.prose{display:grid;gap:12px;max-width:72ch}
+.prose p{margin:0}
+.prose ul{margin:0;padding-left:20px;display:grid;gap:6px}
+.prose a,.src a{color:var(--accent)}
+.src{font-size:13px;color:var(--ink2);display:grid;gap:4px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:6px;font-size:14px;z-index:20}
+.empty{color:var(--ink2);padding:14px}
+.small{font-size:13px;color:var(--ink2)}
+@media (max-width:760px){
+  .grid2{grid-template-columns:minmax(0,1fr)}
+  .strip{grid-template-columns:repeat(15,minmax(0,1fr))}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 16px}
+  .detail{padding-left:12px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head><body>
+<header class="top"><div class="wrap">
+  <div class="brand"><h1>SABAH 30 Gün</h1><span class="save" id="save" role="status">Yüklənir…</span></div>
+  <div class="kpis" id="kpis"></div>
+  <div class="strip" id="strip" aria-label="30 gün"></div>
+  <div class="legend"><span>Yaşıl hündürlük: görülən iş</span><span>Sarı nöqtə: bayram, tədbir və ya qrup</span></div>
+</div></header>
+<nav class="tabs"><div class="wrap" role="tablist" id="tabs"></div></nav>
+<main class="wrap" id="main"><p class="small">Plan yüklənir…</p></main>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+"use strict";
+let PLAN={days:[],lib:[]};let days=[],dates=[];
+const COURSES={hr:"HR",dk:"Diksiya",bk:"Bank",all:"Ümumi"};
+const AREAS={main:"Əsas səhifə",naiba:"HR by Naiba",ads:"Reklam",sales:"Satış",lead:"Rəhbər və təlimçi",setup:"Hazırlıq"};
+const OWNER={main:"a",naiba:"a",ads:"b",sales:"b",setup:"ab",lead:"l"};
+const METRICS=[["mesaj","Mesaj və «+»"],["ciddi","Ciddi müraciət"],["sinaq","Sınağa gəldi"],["odenis","Ödədi (nəfər)"],["azn","Yığılan AZN"],["reklam","Reklam xərci AZN"]];
+const OFFER_DEFAULT={
+  names:{a:"",b:""},
+  hr:{trainer:"Naibə Məmmədova",start:"1 dekabr",days:"həftədə 2 dəfə, 1.5 saat",months:"3",price:"",seats:"",open:"28 noyabr, şənbə, 12:00",event:"25 noyabr, çərşənbə, 20:00",target:"10"},
+  dk:{trainer:"",start:"17 noyabr",days:"",months:"",price:"",seats:"",open:"14 noyabr, şənbə, 12:00",event:"12 noyabr, cümə axşamı, 20:00",target:"9"},
+  bk:{trainer:"Rəşad Abbasov",start:"24 noyabr",days:"həftədə 2 dəfə, 1.5 saat, əyani və onlayn",months:"2",price:"",seats:"",open:"21 noyabr, şənbə, 12:00",event:"18 noyabr, çərşənbə, 20:00",target:"6"}
+};
+const OFFER_FIELDS=[["trainer","Təlimçi"],["price","Aylıq qiymət (AZN)"],["months","Müddət (ay)"],["start","Qrupun başlaması"],["days","Dərs vaxtı"],["seats","Real yer sayı"],["open","Açıq dərs"],["event","Pulsuz canlı dərs"],["target","Tələbə hədəfi"]];
+const TABS=[["bugun","Bu gün"],["plan","Bütün plan"],["reqemler","Rəqəmlər"],["metnler","Hazır mətnlər"],["teklif","Təklif"],["niye","Niyə belə"]];
+const CATS={cavab:"Mesajlara cavab",etiraz:"Etirazlar",geri:"Köhnə müraciətlər",reklam:"Reklam",video:"Video",stories:"Stories",tedbir:"Tədbirlər",profil:"Profil",subut:"Sübut",sirket:"Şirkətlər"};
+const MON=["yanvar","fevral","mart","aprel","may","iyun","iyul","avqust","sentyabr","oktyabr","noyabr","dekabr"];
+const WD=["bazar","bazar ertəsi","çərşənbə axşamı","çərşənbə","cümə axşamı","cümə","şənbə"];
+
+const S={tab:"bugun",date:null,who:"all",course:"all",prog:{},daily:{},offer:null,coach:[],inbox:[],extra:[],open:new Set(),openDay:null,cat:"all",libC:"all",q:"",ro:false,me:null,people:{},dbReady:false,loadedOnce:false};
+const dirty={main:false};
+let db=null,user=null,toastT=null;
+
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $=id=>document.getElementById(id);
+function store(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
+function todayBaku(){return new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Baku"}).format(new Date())}
+function azDate(d){const[y,m,dd]=d.split("-").map(Number);return`${dd} ${MON[m-1]}, ${WD[new Date(Date.UTC(y,m-1,dd)).getUTCDay()]}`}
+function ord(n){const l=n%10;const t={1:"ci",2:"ci",3:"cü",4:"cü",5:"ci",6:"cı",7:"ci",8:"ci",9:"cu"};const suf=l?t[l]:(n%20===0?"ci":"cu");return n+"-"+suf}
+function clampDate(d){if(d<dates[0])return dates[0];if(d>dates[dates.length-1])return dates[dates.length-1];return d}
+function offer(){const o=S.offer||{};const r={names:{...OFFER_DEFAULT.names,...(o.names||{})}};for(const c of["hr","dk","bk"])r[c]={...OFFER_DEFAULT[c],...(o[c]||{})};return r}
+function libById(id){return PLAN.lib.find(l=>l.id===id)}
+function tasksOf(date){const d=days.find(x=>x.date===date);if(!d)return[];return d.tasks.concat(S.extra.filter(x=>x.date===date))}
+function routineOf(date){const d=days.find(x=>x.date===date);return d?d.routine:[]}
+function allOf(date){return tasksOf(date).concat(routineOf(date))}
+function statusOf(id){return(S.prog[id]||{}).status||""}
+function ownerLabel(area){const o=offer().names;const k=OWNER[area];if(k==="a")return o.a||"1-ci nəfər";if(k==="b")return o.b||"2-ci nəfər";if(k==="l")return"Rəhbər və təlimçi";return"İkiniz"}
+function matchWho(t){if(S.who==="all")return true;const k=OWNER[t.area];if(S.who==="l")return k==="l";return k===S.who||k==="ab"}
+function matchCourse(t){return S.course==="all"||t.c===S.course}
+
+// Placeholders
+const LABEL={trainer:"təlimçi",start:"başlama tarixi",days:"dərs vaxtı",months:"müddət",price:"qiymət",seats:"yer sayı",open:"açıq dərs",event:"canlı dərs",target:"hədəf"};
+function fillPlain(t){const o=offer();return t.replace(/\{(hr|dk|bk)\.(\w+)\}/g,(m,c,k)=>o[c][k]||`[${COURSES[c]} ${LABEL[k]||k}]`)}
+function fillHtml(t){const o=offer();const parts=[];let last=0;const re=/\{(hr|dk|bk)\.(\w+)\}|\[[^\]\n]+\]/g;let m;
+  while((m=re.exec(t))){parts.push(esc(t.slice(last,m.index)));
+    if(m[1]){const v=o[m[1]][m[2]];parts.push(v?esc(v):`<span class="gap">${esc(`[${COURSES[m[1]]} ${LABEL[m[2]]||m[2]}]`)}</span>`)}
+    else parts.push(`<span class="manual">${esc(m[0])}</span>`);
+    last=m.index+m[0].length}
+  parts.push(esc(t.slice(last)));return parts.join("")}
+
+// Writes: one at a time per document, kept locally until the store confirms.
+const pending=new Map();const inflight=new Set();
+function loadPending(){try{const p=JSON.parse(store("sabah30-pending")||"{}");for(const k in p)pending.set(k,p[k])}catch(e){}}
+function savePending(){try{store("sabah30-pending",JSON.stringify(Object.fromEntries(pending)))}catch(e){}}
+function setSave(){const el=$("save");
+  if(!db){el.textContent=S.dbReady?"Bu baxışda qeyd etmək olmur":"Yüklənir…";return}
+  if(S.ro){el.textContent="Yalnız baxış";return}
+  el.textContent=pending.size?(navigator.onLine?"Saxlanılır…":"İnternet yoxdur, qeydlər gözləyir"):"Bütün qeydlər saxlanılıb"}
+function put(path,data){if(!db||S.ro){return}pending.set(path,data);savePending();setSave();flush(path)}
+async function flush(path){if(inflight.has(path)||!pending.has(path)||!db)return;inflight.add(path);const data=pending.get(path);
+  try{await db.doc(path).set(data);if(pending.get(path)===data||JSON.stringify(pending.get(path))===JSON.stringify(data))pending.delete(path);savePending()}
+  catch(e){if(e&&(e.code==="permission-denied")){S.ro=true;pending.clear();savePending();renderBanner()}
+    else if(e&&(e.code==="revoked"||e.code==="not_granted")){S.ro=true;renderBanner()}}
+  inflight.delete(path);setSave();if(pending.has(path)&&JSON.stringify(pending.get(path))!==JSON.stringify(data))flush(path)}
+function flushAll(){for(const k of pending.keys())flush(k)}
+window.addEventListener("online",flushAll);setInterval(flushAll,30000);
+
+function setStatus(id,status){const cur=S.prog[id]||{};const next={status,note:cur.note||"",by:S.me||cur.by||null,at:new Date().toISOString()};S.prog[id]=next;put("progress/"+id,next);updateTask(id);renderTop()}
+function setNote(id,note){const cur=S.prog[id]||{};const next={status:cur.status||"",note,by:S.me||cur.by||null,at:new Date().toISOString()};S.prog[id]=next;put("progress/"+id,next)}
+const timers={};function debounce(k,f,ms){clearTimeout(timers[k]);timers[k]=setTimeout(f,ms)}
+
+// People
+async function resolvePeople(){}
+function personName(id){return id||""}
+function timeLabel(iso){if(!iso)return"";const p=new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Baku",day:"numeric",month:"numeric",hour:"2-digit",minute:"2-digit",hour12:false}).formatToParts(new Date(iso));const g=t=>(p.find(x=>x.type===t)||{}).value;return`${Number(g("day"))} ${MON[Number(g("month"))-1]}, ${g("hour")}:${g("minute")}`}
+
+// Render: top
+function totals(){const r={hr:{},dk:{},bk:{},all:{}};for(const[m]of METRICS){for(const c of["hr","dk","bk"])r[c][m]=0;r.all[m]=0}
+  for(const d in S.daily){const row=S.daily[d];for(const c of["hr","dk","bk"])for(const[m]of METRICS){const v=Number((row[c]||{})[m])||0;r[c][m]+=v;r.all[m]+=v}}return r}
+function renderTop(){const today=todayBaku();const idx=Math.max(1,Math.min(30,dates.indexOf(clampDate(today))+1));
+  let done=0,total=0;for(const d of dates)for(const t of tasksOf(d)){total++;if(statusOf(t.id)==="done")done++}
+  const tt=totals();const o=offer();const target=(Number(o.hr.target)||0)+(Number(o.dk.target)||0)+(Number(o.bk.target)||0);
+  $("kpis").innerHTML=`<div class="kpi"><b>${today<dates[0]?"Başlamayıb":today>dates[29]?"Bitib":ord(idx)+" gün"}</b><span>30 gündən</span></div>
+    <div class="kpi"><b>${done} / ${total}</b><span>əsas tapşırıq görülüb</span></div>
+    <div class="kpi"><b>${tt.all.odenis} / ${target}</b><span>yeni ödəyən tələbə</span></div>
+    <div class="kpi"><b>${tt.all.azn} AZN</b><span>yığılıb, reklama ${tt.all.reklam} AZN</span></div>`;
+  $("strip").innerHTML=days.map((d,i)=>{const all=allOf(d.date);const dn=all.filter(t=>statusOf(t.id)==="done").length;const pct=all.length?Math.round(dn/all.length*100):0;
+    const cls=["cell",d.date===today?"today":"",d.date===S.date?"sel":"",d.mark?"mark":""].join(" ");
+    return`<button class="${cls}" data-act="day" data-d="${d.date}" aria-label="${ord(i+1)} gün, ${esc(azDate(d.date))}, ${pct} faiz${d.mark?", "+esc(d.mark):""}"><i style="height:${pct}%"></i><span>${i+1}</span></button>`}).join("");
+  $("tabs").innerHTML=TABS.map(([k,l])=>`<button role="tab" aria-selected="${S.tab===k}" data-act="tab" data-t="${k}">${l}</button>`).join("");setSave()}
+
+// Tasks
+function tplHtml(id){const l=libById(id);if(!l)return"";return`<details class="tpl" data-k="tpl-${id}"><summary>${esc(l.title)}</summary><div class="tpl-in"><pre>${fillHtml(l.text)}</pre>${l.note?`<div class="tnote">${esc(l.note)}</div>`:""}<div><button class="btn" data-act="copy" data-id="${id}">Kopyala</button></div></div></details>`}
+function taskHtml(t){const p=S.prog[t.id]||{};const s=p.status||"";const open=S.open.has(t.id);const who=p.by?personName(p.by):"";
+  const meta=[`<span class="dot ${t.c}">${COURSES[t.c]}</span>`,`<span>${AREAS[t.area]}</span>`,`<span>${esc(ownerLabel(t.area))}</span>`,t.min?`<span>${t.min} dəq</span>`:""];
+  if(s==="done")meta.push(`<span>Edildi${who?" · "+esc(who):""}${p.at?" · "+esc(timeLabel(p.at)):""}</span>`);
+  if(s==="no")meta.push(`<span>Edilmədi${who?" · "+esc(who):""}</span>`);
+  return`<div class="task" data-task="${t.id}" data-s="${s}"><div class="row">
+    <button class="tick" data-act="tick" data-id="${t.id}" data-s="${s}" aria-pressed="${s==="done"}" aria-label="${s==="done"?"Edildi kimi işarəni qaldır":"Edildi kimi işarələ"}: ${esc(t.title)}"${S.ro||!db?" disabled":""}>${s==="done"?"✓":s==="no"?"–":""}</button>
+    <button class="tbody" data-act="open" data-id="${t.id}" aria-expanded="${open}"><span class="ttitle">${esc(t.title)}</span><span class="meta">${meta.join("")}</span>${p.note&&!open?`<span class="notebit">${esc(p.note)}</span>`:""}</button></div>
+    ${open?`<div class="detail">${t.steps&&t.steps.length?`<ol>${t.steps.map(x=>`<li>${fillHtml(x)}</li>`).join("")}</ol>`:""}
+      ${t.ok?`<div class="ok">Hazırdır: ${esc(t.ok)}</div>`:""}
+      ${t.why?`<div class="why"><b>Niyə:</b> ${esc(t.why)}</div>`:""}
+      ${(t.tpl||[]).map(tplHtml).join("")}
+      <label class="small" for="note-${t.id}">Qeyd: nə oldu, rəqəm, problem</label>
+      <textarea id="note-${t.id}" data-note="${t.id}"${S.ro||!db?" disabled":""}>${esc(p.note||"")}</textarea>
+      <div class="actions"><button class="btn ${s==="done"?"on-done":""}" data-act="status" data-id="${t.id}" data-v="done"${S.ro||!db?" disabled":""}>Edildi</button><button class="btn ${s==="no"?"on-no":""}" data-act="status" data-id="${t.id}" data-v="no"${S.ro||!db?" disabled":""}>Edilmədi</button>${s?`<button class="btn" data-act="status" data-id="${t.id}" data-v=""${S.ro||!db?" disabled":""}>Təmizlə</button>`:""}</div></div>`:""}</div>`}
+function findTask(id){for(const d of dates)for(const t of allOf(d))if(t.id===id)return t;return null}
+function updateTask(id){const el=document.querySelector(`[data-task="${id}"]`);if(!el)return;if(el.contains(document.activeElement)&&document.activeElement.tagName==="TEXTAREA")return;const t=findTask(id);if(t)el.outerHTML=taskHtml(t)}
+function filtersHtml(){const o=offer().names;const who=[["all","Hamısı"],["a",o.a||"1-ci nəfər"],["b",o.b||"2-ci nəfər"],["l","Rəhbər və təlimçi"]];const cs=[["all","Bütün kurslar"],["hr","HR"],["dk","Diksiya"],["bk","Bank"]];
+  return`<div class="filters" role="group" aria-label="Kim">${who.map(([k,l])=>`<button class="chip" data-act="who" data-v="${k}" aria-pressed="${S.who===k}">${esc(l)}</button>`).join("")}</div>
+    <div class="filters" role="group" aria-label="Kurs">${cs.map(([k,l])=>`<button class="chip" data-act="course" data-v="${k}" aria-pressed="${S.course===k}">${l}</button>`).join("")}</div>`}
+function numbersHtml(date){const row=S.daily[date]||{};const dis=S.ro||!db?" disabled":"";
+  return`<div class="panel"><h3>Günün rəqəmləri</h3><div class="num"><table><thead><tr><th></th><th>HR</th><th>Diksiya</th><th>Bank</th></tr></thead><tbody>
+    ${METRICS.map(([m,l])=>`<tr><td>${l}</td>${["hr","dk","bk"].map(c=>`<td><input type="number" min="0" inputmode="numeric" id="n-${date}-${c}-${m}" aria-label="${COURSES[c]} ${l}" data-num="${c}.${m}" data-date="${date}" value="${esc((row[c]||{})[m]??"")}"${dis}></td>`).join("")}</tr>`).join("")}
+    </tbody></table></div><div class="small">Ciddi müraciət: nömrəsi var, məqsədini deyib, təlim ona uyğundur. Hər axşam 21:00-da doldurun.</div></div>`}
+function coachHtml(){if(!S.coach.length)return"";const c=S.coach[0];return`<div class="coach"><h3>Claude-dan qeyd</h3>${c.title?`<b>${esc(c.title)}</b>`:""}<div style="white-space:pre-wrap">${esc(c.text||"")}</div>${c.at?`<div class="small">${esc(timeLabel(c.at))}</div>`:""}</div>`}
+function inboxHtml(){const dis=S.ro||!db?" disabled":"";return`<div class="panel"><h3>Claude üçün qeyd</h3><label class="small" for="inbox-text">Sual, problem və ya xəbər yazın. Söhbətdə «cədvəli oxu» yazanda oxuyuram.</label><textarea id="inbox-text"${dis}></textarea><div><button class="btn primary" data-act="inbox"${dis}>Göndər</button></div>
+    ${S.inbox.slice(0,4).map(m=>`<div class="small"><b>${esc(timeLabel(m.at))}</b>: ${esc(m.text)}</div>`).join("")}</div>`}
+function viewToday(){const d=days.find(x=>x.date===S.date)||days[0];const idx=dates.indexOf(d.date);const today=clampDate(todayBaku());
+  const tasks=tasksOf(d.date).filter(t=>matchWho(t)&&matchCourse(t));const routine=routineOf(d.date).filter(t=>matchWho(t));
+  const over=S.date===today?dates.filter(x=>x<today).flatMap(x=>tasksOf(x).map(t=>({...t,_d:x}))).filter(t=>!statusOf(t.id)&&matchWho(t)&&matchCourse(t)):[];
+  return`<div class="dayhead"><div class="daynav"><button data-act="step" data-v="-1"${idx<=0?" disabled":""} aria-label="Əvvəlki gün">←</button><span>${ord(idx+1)} gün · ${esc(azDate(d.date))}</span><button data-act="step" data-v="1"${idx>=29?" disabled":""} aria-label="Növbəti gün">→</button>${S.date!==today?`<button data-act="day" data-d="${today}">Bu günə qayıt</button>`:""}${d.mark?`<span class="flag">${esc(d.mark)}</span>`:""}</div><h2>${esc(d.title)}</h2><p class="focus">${esc(d.focus)}</p></div>
+  <div class="section">${filtersHtml()}</div>
+  <div class="grid2"><div class="stack">
+    ${coachHtml()}
+    ${over.length?`<details class="section" data-k="over"><summary><b>Keçən günlərdən qalan: ${over.length}</b></summary><div class="list">${over.map(taskHtml).join("")}</div></details>`:""}
+    <div class="section"><h3>Bu günün işi</h3><div class="list">${tasks.length?tasks.map(taskHtml).join(""):`<div class="empty">Bu seçimə uyğun tapşırıq yoxdur.</div>`}</div></div>
+    <div class="section"><h3>Hər gün təkrarlanan</h3><div class="list">${routine.map(taskHtml).join("")}</div></div>
+  </div><div class="stack">${numbersHtml(d.date)}${inboxHtml()}</div></div>`}
+function viewPlan(){const blocks=[[0,5,"4–8 noyabr: sızmanı bağlayırıq"],[5,14,"9–17 noyabr: Diksiya qrupu"],[14,20,"18–23 noyabr: Bank qrupu"],[20,26,"24–29 noyabr: HR qrupu"],[26,30,"30 noyabr – 3 dekabr: yekun və yanvar"]];
+  return`<div class="dayhead"><h2>Bütün plan</h2><p class="focus">Bir kursa bir həftə tam diqqət: Diksiya 17 noyabr, Bank 24 noyabr, HR 1 dekabr. Günə toxun, tapşırıqları aç.</p></div><div class="section">${filtersHtml()}</div>`+
+  blocks.map(([a,b,l])=>`<div class="section"><h3>${l}</h3><div class="list">${days.slice(a,b).map(d=>{const i=dates.indexOf(d.date);const ts=tasksOf(d.date);const dn=ts.filter(t=>statusOf(t.id)==="done").length;const op=S.openDay===d.date;const show=ts.filter(t=>matchWho(t)&&matchCourse(t));
+    return`<div class="task"><div class="row" style="grid-template-columns:42px minmax(0,1fr)"><b style="font:700 22px/1 var(--display)">${i+1}</b><button class="tbody" data-act="openday" data-d="${d.date}" aria-expanded="${op}"><span class="ttitle">${esc(d.title)}</span><span class="meta"><span>${esc(azDate(d.date))}</span><span>${dn} / ${ts.length} görülüb</span>${d.mark?`<span class="flag">${esc(d.mark)}</span>`:""}</span></button></div>${op?`<div style="border-top:1px solid var(--line)">${show.map(taskHtml).join("")||`<div class="empty">Bu seçimə uyğun tapşırıq yoxdur.</div>`}</div>`:""}</div>`}).join("")}</div></div>`).join("")}
+function pctOf(a,b){return b?Math.round(a/b*100)+"%":"–"}
+function funnelHtml(c){const t=totals()[c];const max=Math.max(t.mesaj,1);const rows=[["Mesaj və «+»",t.mesaj,""],["Ciddi müraciət",t.ciddi,pctOf(t.ciddi,t.mesaj)],["Sınağa gəldi",t.sinaq,pctOf(t.sinaq,t.ciddi)],["Ödədi",t.odenis,pctOf(t.odenis,t.sinaq)]];
+  return`<div class="panel"><h3><span class="dot ${c}">${COURSES[c]}</span></h3><table><tbody>${rows.map(([l,v,p])=>`<tr><td>${l}</td><td>${v}</td><td style="width:40%"><div class="bar ${c}"><i style="width:${Math.round(v/max*100)}%"></i></div></td><td>${p}</td></tr>`).join("")}</tbody></table><div class="small">Mesajdan ödənişə: ${pctOf(t.odenis,t.mesaj)}. Ödəyən başına reklam: ${t.odenis?Math.round(t.reklam/t.odenis)+" AZN":"–"}. Ciddi müraciət başına reklam: ${t.ciddi?Math.round(t.reklam/t.ciddi)+" AZN":"–"}.</div></div>`}
+function viewNumbers(){const o=offer();const t=totals();const weeks=[["1-ci həftə",0,5],["2-ci həftə",5,12],["3-cü həftə",12,19],["4-cü həftə",19,26],["Son günlər",26,30]];
+  const wrow=([l,a,b])=>{const r={};for(const[m]of METRICS)r[m]=0;for(const d of dates.slice(a,b)){const row=S.daily[d]||{};for(const c of["hr","dk","bk"])for(const[m]of METRICS)r[m]+=Number((row[c]||{})[m])||0}return`<tr><td>${l}</td>${METRICS.map(([m])=>`<td>${r[m]}</td>`).join("")}</tr>`};
+  return`<div class="dayhead"><h2>Rəqəmlər</h2><p class="focus">Bir ayın sonunda baxacağımız sual budur: mesaj real tələbəyə çevrilirmi? Rəqəmlər hər axşam yazılanlardan avtomatik yığılır.</p></div>
+  <div class="tiles">${["hr","dk","bk"].map(c=>`<div class="tile"><b>${t[c].odenis} / ${esc(o[c].target||"–")}</b><span><span class="dot ${c}">${COURSES[c]}</span> yeni tələbə</span></div>`).join("")}<div class="tile"><b>${t.all.azn} AZN</b><span>yığılan pul</span></div><div class="tile"><b>${t.all.reklam} AZN</b><span>reklam xərci</span></div></div>
+  <div class="tiles" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">${["hr","dk","bk"].map(funnelHtml).join("")}</div>
+  <div class="panel"><h3>Həftələr üzrə</h3><div class="num"><table><thead><tr><th></th>${METRICS.map(([,l])=>`<th>${l}</th>`).join("")}</tr></thead><tbody>${weeks.map(wrow).join("")}</tbody></table></div></div>
+  <div class="panel"><h3>Hədəf necə hesablanıb</h3><div class="small">${PLAN.targetNote||""}</div></div>`}
+function viewLib(){const items=PLAN.lib.filter(l=>(S.cat==="all"||l.cat===S.cat)&&(S.libC==="all"||l.c===S.libC||l.c==="all")&&(!S.q||(l.title+" "+l.text).toLowerCase().includes(S.q.toLowerCase())));
+  return`<div class="dayhead"><h2>Hazır mətnlər</h2><p class="focus">Sarı yerlər «Təklif» bölməsi dolanda öz-özünə yazılır. Göy [mötərizə] yerlərini əllə dəyişin. Bu mətnlər başlanğıcdır, öz dilinizlə düzəldin.</p></div>
+  <div class="section"><label class="small" for="libq">Axtar</label><input id="libq" type="search" data-q value="${esc(S.q)}" placeholder="məsələn: bahadır">
+  <div class="filters">${[["all","Hamısı"],...Object.entries(CATS)].map(([k,l])=>`<button class="chip" data-act="cat" data-v="${k}" aria-pressed="${S.cat===k}">${l}</button>`).join("")}</div>
+  <div class="filters">${[["all","Bütün kurslar"],["hr","HR"],["dk","Diksiya"],["bk","Bank"]].map(([k,l])=>`<button class="chip" data-act="libc" data-v="${k}" aria-pressed="${S.libC===k}">${l}</button>`).join("")}</div></div>
+  <div class="section" id="liblist">${items.map(l=>tplHtml(l.id)).join("")||`<div class="empty">Tapılmadı.</div>`}</div>`}
+function viewOffer(){const o=offer();const dis=S.ro||!db?" disabled":"";
+  return`<div class="dayhead"><h2>Təklif</h2><p class="focus">Bura bir dəfə yazın, bütün reklam və mesaj mətnlərində avtomatik görünür. Tarixlər mənim təklifimdir, təlimçilərlə yoxlayın. Yer sayı real olmalıdır.</p></div>
+  <div class="panel"><h3>Komanda</h3><div class="form"><label>1-ci nəfər: kontent (əsas səhifə, HR by Naiba)<input type="text" id="name-a" data-offer="names.a" value="${esc(o.names.a)}"${dis}></label><label>2-ci nəfər: reklam, satış, hesabat<input type="text" id="name-b" data-offer="names.b" value="${esc(o.names.b)}"${dis}></label></div><div class="actions" style="align-items:center"><span class="small">Bu cihazda işləyən:</span>${meChips()}</div></div>
+  ${["hr","dk","bk"].map(c=>`<div class="panel"><h3><span class="dot ${c}">${COURSES[c]}</span></h3><div class="form">${OFFER_FIELDS.map(([k,l])=>`<label>${l}<input type="text" id="o-${c}-${k}" data-offer="${c}.${k}" value="${esc(o[c][k])}"${dis}></label>`).join("")}</div></div>`).join("")}`}
+function viewWhy(){return PLAN.whyHtml||""}
+function renderBanner(){const b=$("banner");if(b)b.remove();render()}
+function meChips(){const o=offer().names;const k=store("sabah30-me")||"";return[["a",o.a||"1-ci nəfər"],["b",o.b||"2-ci nəfər"]].map(([v,l])=>`<button class="chip" data-act="iam" data-v="${v}" aria-pressed="${k===v}">${esc(l)}</button>`).join("")}
+function bannerHtml(){if(!db)return"";if(S.ro)return`<div class="banner" id="banner">Bu linklə qeyd etmək olmur. Linki tam kopyalayıb yenidən açın.</div>`;if(!store("sabah30-me"))return`<div class="banner" id="banner"><div class="actions" style="align-items:center"><b>Bu cihazda kim işləyir?</b>${meChips()}</div></div>`;return""}
+function render(){renderTop();const v={bugun:viewToday,plan:viewPlan,reqemler:viewNumbers,metnler:viewLib,teklif:viewOffer,niye:viewWhy}[S.tab]||viewToday;const openD=[...document.querySelectorAll("details[open]")].map(d=>d.dataset.k);$("main").innerHTML=bannerHtml()+v();for(const k of openD)document.querySelectorAll(`details[data-k="${k}"]`).forEach(d=>d.open=true)}
+function softRender(){const a=document.activeElement;if(a&&(a.tagName==="TEXTAREA"||a.tagName==="INPUT")&&$("main").contains(a)){dirty.main=true;renderTop();return}render()}
+document.addEventListener("focusout",()=>{setTimeout(()=>{if(dirty.main){const a=document.activeElement;if(!(a&&(a.tagName==="TEXTAREA"||a.tagName==="INPUT"))){dirty.main=false;render()}}},200)});
+
+function toast(m){const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{t.hidden=true},1800)}
+document.addEventListener("click",async e=>{const a=e.target.closest("[data-act]");if(!a)return;const act=a.dataset.act;
+  if(act==="tab"){S.tab=a.dataset.t;store("sabah30-tab",S.tab);render();return}
+  if(act==="day"){S.date=a.dataset.d;S.tab="bugun";render();return}
+  if(act==="step"){const i=dates.indexOf(S.date)+Number(a.dataset.v);if(dates[i]){S.date=dates[i];render()}return}
+  if(act==="tick"){const id=a.dataset.id;setStatus(id,statusOf(id)==="done"?"":"done");return}
+  if(act==="status"){setStatus(a.dataset.id,a.dataset.v);return}
+  if(act==="open"){const id=a.dataset.id;S.open.has(id)?S.open.delete(id):S.open.add(id);updateTask(id);return}
+  if(act==="openday"){S.openDay=S.openDay===a.dataset.d?null:a.dataset.d;render();return}
+  if(act==="who"){S.who=a.dataset.v;store("sabah30-who",S.who);render();return}
+  if(act==="course"){S.course=a.dataset.v;render();return}
+  if(act==="cat"){S.cat=a.dataset.v;render();return}
+  if(act==="libc"){S.libC=a.dataset.v;render();return}
+  if(act==="iam"){store("sabah30-me",a.dataset.v);render();return}
+  if(act==="copy"){const l=libById(a.dataset.id);const text=fillPlain(l.text);try{await navigator.clipboard.writeText(text);toast("Kopyalandı")}catch(x){const pre=a.closest(".tpl-in").querySelector("pre");const r=document.createRange();r.selectNodeContents(pre);const s=getSelection();s.removeAllRanges();s.addRange(r);toast("Mətn seçildi, kopyalayın")}return}
+  if(act==="inbox"){const ta=$("inbox-text");const text=ta.value.trim();if(!text||!db)return;a.disabled=true;try{await db.collection("inbox").add({text,by:S.me||null,at:new Date().toISOString(),date:S.date});ta.value="";toast("Göndərildi")}catch(x){toast("Göndərilmədi, yenidən yoxlayın")}a.disabled=false;return}
+});
+document.addEventListener("input",e=>{const el=e.target;
+  if(el.dataset.note){const id=el.dataset.note;debounce("note"+id,()=>setNote(id,el.value),900);return}
+  if(el.dataset.num){const[c,m]=el.dataset.num.split(".");const date=el.dataset.date;const row={...(S.daily[date]||{})};row[c]={...(row[c]||{})};if(el.value==="")delete row[c][m];else row[c][m]=Math.max(0,Number(el.value)||0);row.by=S.me||null;row.at=new Date().toISOString();S.daily[date]=row;debounce("num"+date,()=>{put("daily/"+date,S.daily[date]);renderTop()},800);return}
+  if(el.dataset.offer){const[c,k]=el.dataset.offer.split(".");const o=JSON.parse(JSON.stringify(S.offer||{}));o[c]=o[c]||{};o[c][k]=el.value;S.offer=o;debounce("offer",()=>{put("settings/offer",S.offer);renderTop()},800);return}
+  if("q" in el.dataset){S.q=el.value;debounce("q",()=>{const items=PLAN.lib.filter(l=>(S.cat==="all"||l.cat===S.cat)&&(S.libC==="all"||l.c===S.libC||l.c==="all")&&(!S.q||(l.title+" "+l.text).toLowerCase().includes(S.q.toLowerCase())));$("liblist").innerHTML=items.map(l=>tplHtml(l.id)).join("")||`<div class="empty">Tapılmadı.</div>`},200)}
+});
+
+// Boot
+Object.defineProperty(S,"me",{get(){const k=store("sabah30-me")||"";const n=offer().names;return k==="a"?(n.a||"1-ci nəfər"):k==="b"?(n.b||"2-ci nəfər"):null}});
+function applyPlan(p){PLAN=p;days=p.days;dates=days.map(d=>d.date)}
+function updatePlan(p){applyPlan(p);if(!dates.includes(S.date))S.date=clampDate(todayBaku());softRender()}
+function showFatal(m){$("save").textContent="";$("main").innerHTML=`<div class="banner">${esc(m)}</div>`}
+let lastToday=null;
+function startApp(plan,dbi){applyPlan(plan);db=dbi;S.dbReady=true;S.date=clampDate(todayBaku());lastToday=todayBaku();S.who=store("sabah30-who")||"all";const t=store("sabah30-tab");if(TABS.some(([k])=>k===t))S.tab=t;loadPending();render();
+  document.addEventListener("visibilitychange",()=>{if(document.hidden)return;const n=todayBaku();if(n!==lastToday){lastToday=n;S.date=clampDate(n);softRender()}});
+  let firstOk=false;const timer=setTimeout(()=>{if(!firstOk)$("save").textContent="İnternet zəifdir, qeydlər gələn kimi göndəriləcək"},10000);
+  const seen=()=>{if(!firstOk){firstOk=true;clearTimeout(timer)}setSave()};
+  const onErr=e=>{if(e&&e.code==="permission-denied"){S.ro=true;renderBanner()}};
+  db.collection("progress").onSnapshot(async snap=>{const changed=[];snap.docChanges().forEach(c=>{const id=c.doc.id;if(c.type==="removed")delete S.prog[id];else{if(!pending.has("progress/"+id))S.prog[id]=c.doc.data();}changed.push(id)});
+    if(!snap.metadata.fromCache)seen();if(changed.length>20)softRender();else{changed.forEach(updateTask);renderTop()}},onErr);
+  db.collection("daily").onSnapshot(snap=>{snap.docChanges().forEach(c=>{if(c.type==="removed")delete S.daily[c.doc.id];else if(!pending.has("daily/"+c.doc.id))S.daily[c.doc.id]=c.doc.data()});if(!snap.metadata.fromCache)seen();softRender()},onErr);
+  db.doc("settings/offer").onSnapshot(d=>{if(!pending.has("settings/offer")&&d.exists)S.offer=d.data();if(!d.metadata.fromCache)seen();softRender()},onErr);
+  db.collection("coach").orderBy("at","desc").limit(5).onSnapshot(snap=>{S.coach=snap.docs.map(d=>d.data());softRender()},onErr);
+  db.collection("inbox").orderBy("at","desc").limit(20).onSnapshot(snap=>{S.inbox=snap.docs.map(d=>d.data());softRender()},onErr);
+  db.collection("extra").onSnapshot(snap=>{S.extra=snap.docs.map(d=>({id:d.id,...d.data()}));softRender()},onErr);
+  flushAll();
+}
+</script>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,doc,collection,setDoc,addDoc,onSnapshot,query,orderBy,limit} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+const cfg={apiKey:"AIzaSyCZZLLdPom7KZzmIGN9Jtd36xgXFCU0iMY",authDomain:"sabah-30.firebaseapp.com",projectId:"sabah-30",storageBucket:"sabah-30.firebasestorage.app",messagingSenderId:"880677001412",appId:"1:880677001412:web:d359a03b95d909969b5191"};
+function readKey(){const m=(location.hash||"").match(/k=([A-Za-z0-9]+)/);if(m){try{localStorage.setItem("sabah30-key",m[1])}catch(e){}return m[1]}try{return localStorage.getItem("sabah30-key")}catch(e){return null}}
+const k=readKey();
+if(!k){window.showFatal("Bu link tam deyil. Linki tam kopyalayıb yenidən açın.")}
+else{
+  const app=initializeApp(cfg);
+  let fs;try{fs=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})})}catch(e){fs=initializeFirestore(app,{})}
+  const P="t/"+k+"/";
+  const wrapDoc=s=>({id:s.id,exists:s.exists(),data:()=>s.data(),metadata:s.metadata});
+  const wrapQ=s=>({docs:s.docs.map(wrapDoc),size:s.size,empty:s.empty,metadata:s.metadata,docChanges:()=>s.docChanges().map(c=>({type:c.type,doc:wrapDoc(c.doc)}))});
+  const docRef=p=>{const r=doc(fs,P+p);return{id:r.id,path:p,set:d=>setDoc(r,d),onSnapshot:(n,e)=>onSnapshot(r,s=>n(wrapDoc(s)),e)}};
+  const colRef=(p,cons=[])=>{const c=collection(fs,P+p);const q=cons.length?query(c,...cons):c;return{doc:id=>docRef(p+"/"+id),add:d=>addDoc(c,d),orderBy:(f,dir)=>colRef(p,[...cons,orderBy(f,dir||"asc")]),limit:n=>colRef(p,[...cons,limit(n)]),onSnapshot:(n,e)=>onSnapshot(q,s=>n(wrapQ(s)),e)}};
+  const shim={doc:docRef,collection:colRef};
+  let started=false;
+  const t=setTimeout(()=>{if(!started)window.showFatal("Plan hələ gəlmir. İnterneti yoxlayıb səhifəni yeniləyin.")},20000);
+  onSnapshot(doc(fs,P+"content/plan"),s=>{
+    if(!s.exists()){if(!s.metadata.fromCache){clearTimeout(t);window.showFatal("Bu linklə plan tapılmadı. Linki yoxlayın.")}return}
+    const p=JSON.parse(s.data().json);clearTimeout(t);
+    if(!started){started=true;window.startApp(p,shim)}else window.updatePlan(p);
+  },e=>{clearTimeout(t);window.showFatal(e&&e.code==="permission-denied"?"Bu link səhvdir. Linki tam kopyalayıb yenidən açın.":"Plan yüklənmədi. Səhifəni yeniləyin.")});
+}
+</script>
+</body></html>
